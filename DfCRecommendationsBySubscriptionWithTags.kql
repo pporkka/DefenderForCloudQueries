@@ -1,0 +1,75 @@
+// https://github.com/pporkka/DefenderForCloudQueries/
+// This query is for Defender for Cloud (Azure) to list all the recommendations suitable to be exported to ex. CSV.
+// Direct "Open a Query" from defender does not include subscription name
+// Lists: Subscription name, displayname, resourcetype, resourcename etc..
+// Filters Subsbriptions with Tag + TagValue + allows some nontagged subsbsriptions.
+// Replace "Workload" tag and "Prod" tagvalue with suitable values for your environment.
+// Orders by "risklevel" and then recommendation name, change to fulfill your needs.
+// List contains unhealthy as well as healthy. Import and filter in excel if necessary or modify the query.  
+// Based on DfCs own query. Runnable in Azure Resource Graph Explorer.
+securityresources 
+        | where type =~ "microsoft.security/assessments"
+        | extend assessmentType = (// AssessmentsQueryBuilder.columnDefinitions.assessmentType
+                iff(type == "microsoft.security/assessments", tostring(properties.metadata.assessmentType), dynamic(null)))
+        | where (// AssessmentsQueryBuilder.predicates.isOneQueueSupportedAssessment
+            (type == "microsoft.security/assessments" and (assessmentType in~ ("BuiltIn", "CustomerManaged"))))
+        | extend assessmentId = tolower(id)
+        | extend assessmentKey = (// AssessmentsQueryBuilder.columnDefinitions.assessmentKey
+                iff(type == "microsoft.security/assessments", name, dynamic(null)))
+        | extend source = (// AssessmentsQueryBuilder.columnDefinitions.source
+                iff(type == "microsoft.security/assessments", trim(' ', tolower(tostring(properties.resourceDetails.Source))), dynamic(null)))
+        | extend statusCode = (// AssessmentsQueryBuilder.columnDefinitions.statusCode
+                iff(type == "microsoft.security/assessments", tostring(properties.status.code), dynamic(null)))
+        | extend resourceId = (// AssessmentsQueryBuilder.columnDefinitions.resourceId
+                iff(type == "microsoft.security/assessments", trim(" ", tolower(tostring(case(source =~ "azure", properties.resourceDetails.Id,
+            (// AssessmentsQueryBuilder.predicates.newAwsAssessmentIndicator
+            (type == "microsoft.security/assessments" and (source =~ "aws" and isnotempty(tostring(properties.resourceDetails.ConnectorId))))), properties.resourceDetails.Id,
+            (// AssessmentsQueryBuilder.predicates.newGcpAssessmentIndicator
+            (type == "microsoft.security/assessments" and (source =~ "gcp" and isnotempty(tostring(properties.resourceDetails.ConnectorId))))), properties.resourceDetails.Id,
+            source =~ "aws", properties.resourceDetails.AzureResourceId,
+            source =~ "gcp", properties.resourceDetails.AzureResourceId,
+            extract("^(?i)(.+)/providers/Microsoft.Security/assessments/.+$",1,id)
+            )))), dynamic(null)))
+        | extend resourceName = (// AssessmentsQueryBuilder.columnDefinitions.resourceName
+                iff(type == "microsoft.security/assessments", tostring(coalesce(properties.resourceDetails.ResourceName, properties.additionalData.CloudNativeResourceName, properties.additionalData.ResourceName, properties.additionalData.resourceName, split(resourceId, '/')[-1], extract(@"(.+)/(.+)", 2, resourceId))), dynamic(null)))
+        | extend resourceType = (// AssessmentsQueryBuilder.columnDefinitions.typeFullPath
+                iff(type == "microsoft.security/assessments", tolower(properties.resourceDetails.ResourceType), dynamic(null)))
+        | extend riskLevelText = (// AssessmentsQueryBuilder.columnDefinitions.riskLevelText
+                iff(type == "microsoft.security/assessments", tostring(properties.risk.level), dynamic(null)))
+        | extend riskLevel = (// AssessmentsQueryBuilder.columnDefinitions.riskLevel
+                iff(type == "microsoft.security/assessments", case(riskLevelText =~ "Critical", 4,
+                  riskLevelText =~ "High", 3,
+                  riskLevelText =~ "Medium", 2,
+                  riskLevelText =~ "Low", 1,
+                  0), dynamic(null)))
+        | extend displayName = (// AssessmentsQueryBuilder.columnDefinitions.displayName
+                iff(type == "microsoft.security/assessments", tostring(properties.displayName), dynamic(null)))
+        | extend statusCause = (// AssessmentsQueryBuilder.columnDefinitions.statusCause
+                iff(type == "microsoft.security/assessments", tostring(properties.status.cause), dynamic(null)))
+        | extend statusChangeDate = tostring((// AssessmentsQueryBuilder.columnDefinitions.statusChangeDate
+                iff(type == "microsoft.security/assessments", todatetime(properties.status.statusChangeDate), dynamic(null))))
+        | extend maturityLevel = (// AssessmentsQueryBuilder.columnDefinitions.maturityLevel
+                iff(type == "microsoft.security/assessments", case(
+                    isnull(properties.metadata.preview), "GA",
+                    tobool(properties.metadata.preview), "Preview",
+                    "GA"), dynamic(null)))
+        | join kind=inner (
+    resourcecontainers
+    | where type == 'microsoft.resources/subscriptions'
+    | mvexpand tags
+    | extend tagKey = tostring(bag_keys(tags)[0])
+    | extend tagValue = tostring(tags[tagKey])
+    | where (tagKey =~ "Workload" and tagValue =~"Prod")  // or (name contains 'SomethingSomething')
+    | project subscriptionName = name, subscriptionId)    
+    on subscriptionId               
+    | project subscriptionName, 
+            displayName, assessmentId, 
+            maturityLevel,
+            statusChangeDate,
+            riskLevel,
+            statusCode,                    
+            resourceId,               
+            assessmentKey,
+            resourceType,
+            resourceName
+    | order by riskLevel desc, displayName
