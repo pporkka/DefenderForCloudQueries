@@ -1,0 +1,19 @@
+// https://github.com/pporkka/DefenderForCloudQueries/
+// This query fetches secure scores for all subscriptions with certain tag+value. If you for example have insane number of subscriptions, with different purposes, this might be it.
+// Secure score for "Prod" subscriptions (tag: workload) + some without any usefull tags. Change the tag "Workload" and tagvalue "Prod" to fulfill your needs.
+// run in Azure Resource Graph Explorer
+securityresources
+| where type == 'microsoft.security/securescores'
+| extend current = todouble(properties.score.current), max = todouble(properties.score.max)
+| extend securescore = strcat(round(((current / max)*100),0),"%")
+| join kind=inner (
+    resourcecontainers
+    | where type == 'microsoft.resources/subscriptions'
+    | mvexpand tags
+    | extend tagKey = tostring(bag_keys(tags)[0])
+    | extend tagValue = tostring(tags[tagKey])
+    | where (tagKey =~ "Workload" and tagValue =~"Prod")  //or (name contains 'somethingsomething')
+    | project subscriptionName = name, subscriptionId)    
+    on subscriptionId
+| distinct subscriptionName, securescore, current, max
+| sort by subscriptionName asc
