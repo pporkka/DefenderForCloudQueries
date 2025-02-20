@@ -1,0 +1,39 @@
+// https://github.com/pporkka/DefenderForCloudQueries/
+// Detected vulnerabilities from Azure container registry images
+// Digging Defender for Cloud security recommendations by filtering to "Container images in Azure registry should have..."
+// This KQL creates a list suitable for exporting to CSV with details such as CVE numbers, severities, "evidence", tags and many other
+// Defender for Cloud CWP "Containers" plan need to be enabled and Registry Access under that.
+securityresources
+| where type == 'microsoft.security/assessments'
+| where properties.displayName contains 'Container images in Azure registry should have vulnerability'
+| summarize by assessmentKey=name //the ID of the assessment
+| join kind=inner (
+	securityresources
+	| where type == 'microsoft.security/assessments/subassessments'
+//    | where properties.status.severity == 'High'
+	| extend assessmentKey = extract('.*assessments/(.+?)/.*',1,  id)
+) on assessmentKey
+| join kind=inner (
+    resourcecontainers
+    | where type == 'microsoft.resources/subscriptions'
+    | project subscriptionName = name, subscriptionId)    
+    on subscriptionId   
+| project vulnid = properties.id, 
+	severity = properties.status.severity, 
+	description = properties.description, 
+	evid = properties.additionalData.softwareDetails.evidence, 
+	tags = properties.additionalData.artifactDetails.tags, 
+	assessmentKey, 
+	subassessmentKey=name, 
+	id,  
+	resourceGroup, 
+	subscriptionName, 
+	tenantId, 
+	parse_json(properties)
+| extend displayName = properties.displayName,
+	resourceId = properties.resourceDetails.id,
+	resourceSource = properties.resourceDetails.source,	
+	code = properties.status.code,
+	timeGenerated = properties.timeGenerated,
+	remediation = properties.remediation,
+	impact = properties.impact //, additionalData = properties.additionalData
