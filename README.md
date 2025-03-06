@@ -52,9 +52,6 @@ Remove the comment to do so and change "somethingsomethin" to something else :).
 With a large amount of subscriptions, it may be painfull to find out what subscriptions have Defener for Cloud plans enabled or not.
 This query does just that. The results are based on the pricing information (enabled==costs, disabled=free). The names in the results are sometimes not the same as in UI, so here's a 
 table explaining what name.
-| Month    | Savings |
-| -------- | ------- |
-| January  | $250    |
 
 | Plan name in pricing tiers | Plan name in Defender UI |
 | -------- | -------- |
