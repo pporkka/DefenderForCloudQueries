@@ -1,7 +1,7 @@
 # DefenderForCloudQueries
 KQL Queries for Defender for Cloud (Azure thingy).
 
-These KQL queries may help to gather information from Defender for Cloud, such as security recommendations and security scores. These may come handy when you have many subscriptions and large clouds where UI in the Defender for Cloud may not be the optimal solution. Yes, you can get CVS files downloaded straight up, but they lack for example subscription names and filtering with for example tags.
+These KQL queries may help to gather information from Defender for Cloud, such as security recommendations and security scores. These may come handy when you have many subscriptions and large clouds where UI in the Defender for Cloud may not be the optimal solution. Yes, you can get CSV files downloaded straight up, but they lack for example subscription names and filtering with for example tags.
 
 These are all executable in Azure Resource Graph Explorer, which at the time of writing does not for example allow "let xxx = <query>" to ease up the writing.
 
@@ -49,7 +49,7 @@ Remove the comment to do so and change "somethingsomethin" to something else :).
 
 ## Enabled-DefenderForCloud-plans.kql
 
-With a large amount of subscriptions, it may be painfull to find out what subscriptions have Defener for Cloud plans enabled or not.
+With a large amount of subscriptions, it may be painfull to find out what subscriptions have Defender for Cloud plans enabled or not.
 This query does just that. The results are based on the pricing information (enabled==costs, disabled=free). The names in the results are sometimes not the same as in UI, so here's a 
 table explaining what name.
 
