@@ -1,0 +1,18 @@
+// KQL to list subscriptions with info about enablement of Defender for Cloud 
+// https://github.com/pporkka/DefenderForCloudQueries/
+// Information is based on pricing information. 
+// FullyCovered=enabled
+// NotCovered=disabled
+// See explanations for naming differences between UI and these results
+
+SecurityResources
+| where type == 'microsoft.security/pricings'
+| where properties.deprecated != true
+//| where properties.resourcesCoverageStatus =~ 'NotCovered'
+| join kind=inner (
+resourcecontainers
+    | where type == 'microsoft.resources/subscriptions'
+    | project subscriptionName = name, subscriptionId)    
+    on subscriptionId
+| project subscriptionName, Plan= name, Coverage=properties.resourcesCoverageStatus //, properties, SubId= subscriptionId
+| order by subscriptionName asc, Plan asc 
