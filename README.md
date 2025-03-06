@@ -46,3 +46,32 @@ Remove the comment to do so and change "somethingsomethin" to something else :).
 ```
 // or (name contains 'SomethingSomething')
 ```
+
+## Enabled-DefenderForCloud-plans.kql
+
+With a large amount of subscriptions, it may be painfull to find out what subscriptions have Defener for Cloud plans enabled or not.
+This query does just that. The results are based on the pricing information (enabled==costs, disabled=free). The names in the results are sometimes not the same as in UI, so here's a 
+table explaining what name.
+| Month    | Savings |
+| -------- | ------- |
+| January  | $250    |
+
+| Plan name in pricing tiers | Plan name in Defender UI |
+| -------- | -------- |
+| OpenSourceRelationalDatabases	| Databases - Sub option: Open-source relational databases |
+| AppServices | App Service |
+| AI | AI workloads |
+| CosmosDbs | Databases - Sub option: Azure Cosmos Db |
+| SqlServerVirtualMachines | Databases - Sub option: SQL servers on machines |
+| StorageAccounts | Storage |
+| Containers | Containers |
+| SqlServers | Databases - Sub option: Azure SQL Databases |
+| CloudPosture | Defender CSPM  |
+| VirtualMachines | Servers |
+| Api | APIs |
+| KeyVaults | Key Vault |
+| Arm | Resource Manager |
+| ContainerRegistry | Container Registries (Deprecated) |
+| Dns | DNS (Deprecated) |
+| KubernetesService |  Kubernetes (deprecated) |
+
