@@ -11,7 +11,8 @@ resourcecontainers
 | extend tagValue = tostring(tags[tagKey])
 | where (tagKey =~ "Workload" and tagValue =~"Prod")  //or (name contains 'somethingsomething')
 | project subscriptionName = name, subscriptionId
-| join kind = fullouter(
+| distinct subscriptionName, subscriptionId
+| join kind = leftouter(
 securityresources
 | where type == 'microsoft.security/securescores'
 | extend current = case(isnotempty(properties.score.current), properties.score.current, 0), max = todouble(case(isnotempty(properties.score.max),properties.score.max,0)))
