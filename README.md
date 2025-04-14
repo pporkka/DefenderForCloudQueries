@@ -72,6 +72,37 @@ table explaining what name.
 | Dns | DNS (Deprecated) |
 | KubernetesService |  Kubernetes (deprecated) |
 
+## DfcGitHubRecommendations.kql
+
+Organization's github can be connected to Defender for Cloud to get unified experience to security data from github.
+Prerequisites to get this working: Add your enterprise github with a connector to your Defender for Cloud. You will need some heavy (org owner) access permissions to do it. 
+
+Some of the recommendations have subassessments (example vulnerable packages), see below for another query to get those.
+
+All this is available in the Defender UI, but if you need a neat list, this may help to get that.
+
+This query lists "unhealthy" recommendations from the GitHub such as:
+
+GitHub repositories should have secret scanning enabled
+GitHub repositories should have code scanning enabled
+GitHub repositories should have Dependabot scanning enabled
+GitHub repositories should have secrets scanning findings resolved
+GitHub repositories should have code scanning findings resolved
+GitHub repositories should have API security testing findings resolved
+GitHub repositories should have dependency vulnerability scanning findings resolved
+GitHub repositories should have force pushes to default branch disabled
+GitHub repositories should have protection policies for default branch enabled
+GitHub repositories should not use self hosted runners
+GitHub repositories should require minimum two-reviewer approval for code pushes.
+GitHub organizations should have more than one person with administrator permissions
+GitHub organizations should not make action secrets accessible to all repositories
+GitHub organizations should have actions workflow permissions set to read-only
+GitHub organizations should enforce multifactor authentication for outside collaborators
+GitHub organizations should have base permissions set to no permissions or read
+GitHub organizations should have secret scanning push protection enabled
+GitHub organizations should block Copilot suggestions that match public code.
+
+
 
 ## DfCGitHubSubassessments.KQL
 
