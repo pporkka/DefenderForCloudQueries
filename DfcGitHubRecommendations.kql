@@ -1,0 +1,18 @@
+// https://github.com/pporkka/DefenderForCloudQueries/
+// GitHub connected recommendations from Defender for Cloud
+// Requires GitHub connector to enterprise Github organization(s)
+// This does not look for any subassessments
+// Ignores findings that have "Status cannot be determined", because those are due to something not done in the first place, like "Secret scans not enabled" 
+securityresources
+| where type == 'microsoft.security/assessments'
+| extend source = tostring(properties.resourceDetails.Source)
+| extend ResourceName = properties.resourceDetails.ResourceName
+| extend FindingName=tostring(properties.displayName)
+| extend adata = parse_json(properties.additionalData)
+| extend meta = parse_json(properties.metadata)
+| extend code = tostring(properties.status.code)
+| extend cause = tostring(iif(isnotempty(properties.status.cause),properties.status.cause, "-"))
+| where source == 'GitHub'
+| where code == 'Unhealthy'
+| where cause !contains 'Status cannot be determined'   // not interested about these for now.
+| project ResourceName, FindingName, code, cause //, adata, meta, properties
