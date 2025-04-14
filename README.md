@@ -72,3 +72,12 @@ table explaining what name.
 | Dns | DNS (Deprecated) |
 | KubernetesService |  Kubernetes (deprecated) |
 
+
+## DfCGitHubSubassessments.KQL
+
+Organization's github can be connected to Defender for Cloud to get unified experience to security data from github.
+
+This query lists all the subassessments from the specified connector. Subassessments contain at least vulnerable packages that you should get updated with eg. dependabot.  Unfortunately the repos that I had access didn't have secret scanning enabled so I am not sure if they are supposed to be in the subassessments and if they are, this query may end up not showing them. Just use the first 3 lines of the query to get everything and go from there.
+
+Prerequisites to get this working: Add your enterprise github with a connector to your Defender for Cloud. You will need some heavy (org owner) access permissions to do it. 
+
