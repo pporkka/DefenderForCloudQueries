@@ -1,0 +1,14 @@
+// https://github.com/pporkka/DefenderForCloudQueries/
+// Prerequisites: Github organization added to Defender for Cloud
+// Lists relevant information from subassessments from connected GitHub connector data. 
+// Subassessments contain eg. vulnerable packages in the github projects
+// There is lots of additional data this query does not show, use the first 3 lines to get the data and then select "view details" to see the whole json.
+// REPLACE below YOURCONNECTORNAMEHERE with the name of the github connector added to your defender
+securityresources
+| where type == 'microsoft.security/assessments/subassessments'
+| where id contains "/Microsoft.Security/securityConnectors/YOURCONNECTORNAMEHERE/devops/"
+| extend data = parse_json(properties.additionalData.data)
+| extend target = parse_json(properties.additionalData.resourceIdAsTargetNodeId)
+| extend Severity = tostring(data.Severity)
+| project Resource=target.targetResourceId, Severity, Name=properties.displayName,  CVE=data.SecurityAdvisoryCVE, CVSS=data.CVSSScore, Identifiers=data.Identifiers, Package=data.Package, Ord=iif(Severity=="critical", 5, iif(Severity=="high", 4, iif(Severity=="medium", 3, iif(Severity=="low", 2,0))))
+| order by Ord desc
