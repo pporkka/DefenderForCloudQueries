@@ -6,13 +6,15 @@
 securityresources
 | where type == 'microsoft.security/assessments'
 | extend source = tostring(properties.resourceDetails.Source)
+| where source == 'GitHub'
 | extend ResourceName = properties.resourceDetails.ResourceName
 | extend FindingName=tostring(properties.displayName)
 | extend adata = parse_json(properties.additionalData)
 | extend meta = parse_json(properties.metadata)
 | extend code = tostring(properties.status.code)
 | extend cause = tostring(iif(isnotempty(properties.status.cause),properties.status.cause, "-"))
-| where source == 'GitHub'
+| extend Category = tostring(iif(isnotempty(adata.AffectedResourceCategory), adata.AffectedResourceCategory,"-"))
+| extend Organization = tostring(iif(isnotempty(adata.GitHubOrg), adata.GitHubOrg,"-"))
 | where code == 'Unhealthy'
 | where cause !contains 'Status cannot be determined'   // not interested about these for now.
-| project ResourceName, FindingName, code, cause //, adata, meta, properties
+| project Organization, ResourceName, FindingName, code, cause, Category //, adata, meta, properties
