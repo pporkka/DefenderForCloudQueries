@@ -113,3 +113,10 @@ This query lists all the subassessments from the specified connector. Subassessm
 
 Prerequisites to get this working: Add your enterprise github with a connector to your Defender for Cloud. You will need some heavy (org owner) access permissions to do it. 
 
+## DevOpsGH - Folder
+
+This folder contains GitHub recommendation specific queries to really drill down with a recommendation specific information.
+
+This is a work in progress. 
+
+
