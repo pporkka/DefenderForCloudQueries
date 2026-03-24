@@ -1,0 +1,36 @@
+// DevOps Specific: Ensure Terraform module sources use a commit hash
+// Why this is needed: Its a bets practice to pin external modules to a commit instead of tag
+// Why? Tags are mutable, commit hashes are immutable. Meaning tags can be changed afterwards in a breach.
+securityresources
+| where type == "microsoft.security/assessments/subassessments"
+| extend assessmentKey = extract(".*assessments/(.+?)/.*",1,  id)
+| where assessmentKey == "6588c4d4-fbbb-4fb8-be45-7c2de7dc1b3b" or assessmentKey == "d9be0ff8-3eb0-4348-82f6-c1e735f85983"
+| extend Source = tostring(properties.resourceDetails.source)
+| extend Finding = tostring(properties.status.description)
+| where Finding == "Ensure Terraform module sources use a commit hash"
+| extend Repo = tostring(iff(Source == 'GitHub', split(id,'/')[14], split(id,'/')[16])), Project = tostring(iff(Source == 'AzureDevOps', split(id,'/')[14], 'N/A')), Organization = tostring(iff(Source == 'GitHub', split(id,'/')[12], split(id,'/')[12])),
+    Status = tostring(properties.status.code),
+    Severity = tostring(properties.status.severity),
+    Tool = tostring(properties.additionalData.data.ToolName),
+    RuleID = tostring(properties.additionalData.data.RuleId),
+    Branch = tostring(properties.additionalData.data.Branch),
+    Time = tostring(properties.timeGenerated),
+    Details = "info",
+    Html_Url = tostring(properties.additionalData.data.Html_Url), 
+    Build_Url = tostring(properties.additionalData.data.Build_Url),
+    FileName = tostring(properties.additionalData.data.File),
+    LineNr = properties.additionalData.data.Line
+| extend Location = iff(isnotempty(Html_Url), Html_Url, iif(Build_Url != "N/A", Build_Url, tostring(properties.additionalData.data.RepositoryUri)))
+| extend Creation_Date_Raw = tostring(properties.additionalData.data.Creation_Date)
+| extend Creation_Date_Trimmed = trim('\"', tostring(Creation_Date_Raw)) 
+| extend Creation_Date = todatetime(Creation_Date_Trimmed) 
+| extend CreatedAt = Creation_Date
+| extend SeveritySort = case(
+    Severity == "High", 1,
+    Severity == "Medium", 2,
+    Severity == "Low", 3,
+    4
+)
+| order by SeveritySort asc, Severity asc
+| project-away SeveritySort
+| project Severity, Organization, Repo, Branch, FileName, LineNr, Finding, CreatedAt, properties, Details  //,Tool, Location, Project, 
