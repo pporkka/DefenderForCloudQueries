@@ -1,0 +1,26 @@
+// Repository with other DfC queries https://github.com/pporkka/DefenderForCloudQueries
+// Lists azure storage accounts, their Defender for Storage enablement and specifically antimalware settings in there. 
+// Utilizes securityresources table's "pricings" to pull plan enablement 
+// Utilizes securityresources table's "defenderforstoragesettings" to pull antimalware settings. 
+// remove comments from "where enabled == false" to find out only the accounts with no antimalware.
+securityresources
+| where type == "microsoft.security/defenderforstoragesettings"
+| join kind=inner ( 
+    securityresources
+    | where type == 'microsoft.security/pricings'
+    | where name == "StorageAccounts"
+    | extend Coverage = case(isnotempty(properties.resourcesCoverageStatus),properties.resourcesCoverageStatus, 'NotCovered')
+    | project Coverage, subscriptionId
+    ) on $left.subscriptionId == $right.subscriptionId
+| join kind=leftouter (
+    resourcecontainers
+    | where type == "microsoft.resources/subscriptions"    
+    | project subscriptionId, subscriptionName = name
+) on $left.subscriptionId == $right.subscriptionId
+| extend enabled = properties.isEnabled
+//| where enabled == false
+| extend override = properties.overrideSubscriptionLevelSettings
+| extend malwareonupload = properties.malwareScanning.onUpload.isEnabled
+| extend resname = split(id, '/')[-5]
+| project subscriptionName, resname, Coverage, enabled, override, malwareonupload, properties
+| order by subscriptionName

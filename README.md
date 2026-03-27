@@ -5,6 +5,18 @@ These KQL queries may help to gather information from Defender for Cloud, such a
 
 These are all executable in Azure Resource Graph Explorer, which at the time of writing does not for example allow "let xxx = <query>" to ease up the writing.
 
+Most, if not all of these, require at least "Security Reader" role for any subscription (or for tenant root management level) to access DfC settings and information.
+
+## KQL_DefenderForStorage_Settings.kql
+
+List of Subscriptions, storage accounts and some defender related settings. This unifies information from enabled defender for cloud plans and settings from storage accounts themselves. Utilizes "securityresources" table information "microsoft.security/defenderforstoragesettings" and "microsoft.security/pricings". 
+
+The point of this script is to find where your antimalware settings are enabled and where they are not. 
+
+The "Coverage" column displays the Defender for Storage enablement, and by default the antimalware is on as well when the plan is enabled. "FullyCovered" means the DfS is enabled on subscription level. If the coverage is "NotCovered", then Defender for Storage is not enabled for that subscription which of course means that antimalware can't be enabled either.
+
+The column "enabled" is from the storage account's settings and should usually be semantically the same as "coverage", i.e. "FullyCovered" = enabled and "NotCovered" = not enabled. The subscription can have the antimalware disabled even when subscription has antimalware enabled, this you can see from override column. If the "override" = "true", then that specific storage account's setting's overrides the defender for storage subscription level settings (usually means antimalware for specific storage is disabled even if it is enabled on sub level). 
+
 ## DfCAzureContainerRegistryVulnerabilities.kql
 
 Retuns a list of vulnerabilities detected in Azure container registries detected by Defender for Cloud. 
