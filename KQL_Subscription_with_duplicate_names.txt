@@ -1,0 +1,18 @@
+// This is for Azure Resource Graph Explorer. Other KQL clients may have better functions to do the same (maybe ARGE as well, I just couldnt figure it out)
+// KQL to get azure subscriptions in a tenant with duplicate names and their managementgroup chain
+// First: Get subscriptions with multiple names (count > 1)
+// Then: Get managementGroupAncestorsChain, reverse it to get Top to bottom, make string list of it.
+resourcecontainers
+| where type == 'microsoft.resources/subscriptions'
+| summarize count() by name
+| where count_ > 1
+| project name, count_
+| join kind=inner 
+( resourcecontainers
+| extend revch = array_reverse(properties.managementGroupAncestorsChain)
+| mv-expand ch = revch
+| summarize managementgroups = strcat_array(make_list(tostring(ch.displayName)), ", ") by id, name
+| project managementgroups, name
+) on name
+| project-away name1
+| order by count_, name, managementgroups
