@@ -18,5 +18,5 @@ securityresources
 | extend Identifiers=data.Identifiers
 | extend Package=data.Package
 | extend Ord=iif(Severity=="critical", 5, iif(Severity=="high", 4, iif(Severity=="medium", 3, iif(Severity=="low", 2,0))))
-| project Resource, Severity, Name, CVE, CVSS, Identifiers, Package, Ord //,properties
-| order by Ord desc
+| summarize count() by Resource
+| order by count_ desc
