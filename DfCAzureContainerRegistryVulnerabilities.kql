@@ -1,23 +1,22 @@
 // https://github.com/pporkka/DefenderForCloudQueries/
 // Detected vulnerabilities from Azure container registry images
-// Digging Defender for Cloud security recommendations by filtering to "Container images in Azure registry should have..."
+// Specific assessments are as follows. Pick either one depending if you need to detect vulns in STORED images or RUNNING images. Different DfC plans affect what you get.
+// - "Azure registry container images should have vulnerabilities resolved" = c0b7cfc6-3172-465a-b378-53c7ff2cc0d5
+// - "Azure RUNNING container images should have vulnerabilities resolved" = c609cf0f-71ab-41e9-a3c6-9a1f7fe1b8d5
 // This KQL creates a list suitable for exporting to CSV with details such as CVE numbers, severities, "evidence", tags and many other
 // Defender for Cloud CWP "Containers" plan need to be enabled and Registry Access under that.
+// Updated: 2026-05-06: Assessment names changed, using GUIDs instead.
 securityresources
-| where type == 'microsoft.security/assessments'
-| where properties.displayName contains 'Container images in Azure registry should have vulnerability'
-| summarize by assessmentKey=name //the ID of the assessment
-| join kind=inner (
-	securityresources
-	| where type == 'microsoft.security/assessments/subassessments'
-//    | where properties.status.severity == 'High'
+	| where type == 'microsoft.security/assessments/subassessments'	
 	| extend assessmentKey = extract('.*assessments/(.+?)/.*',1,  id)
-) on assessmentKey
+	| where assessmentKey == "c0b7cfc6-3172-465a-b378-53c7ff2cc0d5"	// images in registry
+//	| where assessmentKey == "c609cf0f-71ab-41e9-a3c6-9a1f7fe1b8d5"	// use this if you want running images
+//    | where properties.status.severity == 'High'
 | join kind=inner (
     resourcecontainers
     | where type == 'microsoft.resources/subscriptions'
     | project subscriptionName = name, subscriptionId)    
-    on subscriptionId   
+    on subscriptionId 
 | project vulnid = properties.id, 
 	severity = properties.status.severity, 
 	description = properties.description, 
